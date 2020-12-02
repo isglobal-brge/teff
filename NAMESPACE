@@ -3,3 +3,4 @@
 S3method(plot,pteff)
 S3method(print,pteff)
 export(profile)
+export(target)

@@ -1,6 +1,6 @@
-#' Profiles of significantly high and low treatment effects
+#' Profiles of individuals with significantly high and low treatment effects
 #'
-#' @details This function sets up feature and treatment-effects, fits
+#' @details This function sets up feature and treatment-effects data, fits
 #' random causal forest and identify the individuals with significant
 #' treatment effects. Individuals with significant treatment effects
 #' are considered for those whose confidence intervals for the treatment
@@ -9,7 +9,7 @@
 #' The function randomly splits the data into test (20%) and train (80%)
 #' sets to fit the forest.
 #'
-#' @export profile
+#' @export
 #' @param x a \code{list} with a fields \code{teffdata} and \code{features}.
 #' \code{teffdata} the data for treatment, effect and covariates across
 #' subjects. \code{features} data is the data on which the profiling
@@ -96,7 +96,7 @@ profile <- function(x, featuresinf=NULL, cores=1, seed=1234, plot.overlap=FALSE,
   }, mc.cores = cores)
 
 
-  #redefine expression data
+  #redefine feature data
   X <- do.call(cbind, XX)
   colnames(X) <- nms
 
@@ -226,7 +226,14 @@ profile <- function(x, featuresinf=NULL, cores=1, seed=1234, plot.overlap=FALSE,
   if(is.matrix(proflow)==FALSE)
     proflow <- matrix(proflow, ncol=ncol(profall))
 
-  colnames(profhigh) <- colnames(Xscale)
+  #summarize subject profiles into a single one representing individuals with
+  #high treatment effects
+  profhigh <- matrix(colMeans(profhigh, na.rm=TRUE)>0.5, nrow=1)
+
+  #and low treatment effects
+  proflow <- matrix(colMeans(proflow, na.rm=TRUE)>0.5, nrow=1)
+
+   colnames(profhigh) <- colnames(Xscale)
   colnames(proflow) <- colnames(Xscale)
 
   ##########

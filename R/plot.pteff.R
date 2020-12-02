@@ -1,5 +1,5 @@
 #' Plots inferred treatment effects of individuals from
-#' \link[profile]{teff}
+#' \link[teff]{profile}
 #'
 #' @param x object of class \code{pteff}
 #' @param lb label of the y axis for treatment effect.
@@ -57,7 +57,12 @@ plot.pteff <- function(x, lb="Associated treatment effect", ...)
 #' @export
 
 print.pteff <- function(x){
-  cat("object of class pteff")
-  cat("\n individuals with high treatment effect:", nrow(pf$profile$profhigh))
-  cat("\n individuals with low treatment effect:", nrow(pf$profile$proflow))
+  cat("object of class: pteff \n")
+  cat("Binary profile of high treatment effect: \n")
+  print(pf$profile$profhigh[1,1:5])
+  cat("... access to full profile with pf$profile$profhigh\n")
+  cat("\n")
+  cat("Binary profile of low treatment effect: \n")
+  print(pf$profile$proflow[1,1:5])
+  cat("... access to full profile with pf$profile$proflow\n")
 }

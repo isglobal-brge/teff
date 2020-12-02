@@ -3,7 +3,7 @@
 \name{plot.pteff}
 \alias{plot.pteff}
 \title{Plots inferred treatment effects of individuals from
-\link[profile]{teff}}
+\link[teff]{profile}}
 \usage{
 \method{plot}{pteff}(x, lb = "Associated treatment effect", ...)
 }
@@ -17,7 +17,7 @@ A plot on the current graphics device.
 }
 \description{
 Plots inferred treatment effects of individuals from
-\link[profile]{teff}
+\link[teff]{profile}
 }
 \examples{
 data(tcell)

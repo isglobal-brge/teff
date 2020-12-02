@@ -2,7 +2,7 @@
 % Please edit documentation in R/profile.R
 \name{profile}
 \alias{profile}
-\title{Profiles of significantly high and low treatment effects}
+\title{Profiles of individuals with significantly high and low treatment effects}
 \usage{
 profile(
   x,
@@ -57,10 +57,10 @@ intervals for the estimated treatment effect.}
 }
 }
 \description{
-Profiles of significantly high and low treatment effects
+Profiles of individuals with significantly high and low treatment effects
 }
 \details{
-This function sets up feature and treatment-effects, fits
+This function sets up feature and treatment-effects data, fits
 random causal forest and identify the individuals with significant
 treatment effects. Individuals with significant treatment effects
 are considered for those whose confidence intervals for the treatment
