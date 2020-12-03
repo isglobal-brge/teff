@@ -15,11 +15,11 @@ profile(
 }
 \arguments{
 \item{x}{a \code{list} with a fields \code{teffdata} and \code{features}.
-\code{teffdata} the data for treatment, effect and covariates across
-subjects. \code{features} data is the data on which the profiling
-is done. Adjusted features for the variables on the \code{teffdata} are
-used to fit the forest and extract the profiles of individuals with
-significant  treatments.}
+\code{teffdata} is a \code{data.frame} (or \code{matrix}) with the treatment
+\code{$t} and effect \code{$eff} variables, and covariates across
+subjects. \code{features} is a \code{matrix} which the profiling
+is of subjects if performed. The features are adjusted for the covariates
+on the \code{teffdata} before fitting the causal random forest forest.}
 
 \item{featuresinf}{a \code{vector} of characters with the names of the
 features to be used; a \code{matrix} of characters whose columns are
@@ -64,10 +64,16 @@ This function sets up feature and treatment-effects data, fits
 random causal forest and identify the individuals with significant
 treatment effects. Individuals with significant treatment effects
 are considered for those whose confidence intervals for the treatment
-estimate do not overlap 0.
+estimate do not overlap 0. Single consensus profiles of individuals with
+high, and low, treatment effects are obtained from majority votes of
+adjusted features, binarized over the population means.
 
-The function randomly splits the data into test (20\%) and train (80\%)
-sets to fit the forest.
+The result is two profiles, associated with high and low
+treatment effects, given by logical vectors across the
+features. The logical values indicate at each position whether
+the values of the adjusted features should be higher than the
+features' population means for new individuals targeted
+by each profile. See \link[teff]{taget}.
 }
 \examples{
 data(tcell)

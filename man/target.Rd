@@ -55,7 +55,7 @@ computation (Default:1).}
 \item{...}{additional parameters for the \code{image} function}
 }
 \value{
-a \code{list}  with fields:
+a \code{list} of class \code{tarteff} with fields:
 \describe{
 \item{classification:}{classification of individuals into subpopulations of
 expected high and/or low treatment effects}
@@ -73,19 +73,21 @@ into subpopulations associated with high and low treatment effects. The
 classification is performed by targeting the feature data (adjusted by
 covariates and binarized) to the profiles computed in \link[teff]{profile}.
 
-The function allows the assessment of the heterogeneity of the
-treatment effect across the subpopulations by testing the association
-of the effect with the interaction between subpopulation classification
-and the treatment.
+The function tests whether the classification of the subjects stratifies
+the association of the treatment with the effect, testing the
+interaction between subpopulation classification and the treatment.
 
-Models on the effects to test the interaction include_ general lineal
+Models on the effects to test the interaction include the general lineal
 models, beta regression and proportional hazards models.
+
+The function can be used to target new individuals not used in the profiling
+and/or other types of effects expected from the treatment.
 }
 \examples{
 data(tcell)
 homologous<- matrix(c("DDX3Y","DDX3X","KDM5D","KDM5C","PRKY","PRKX","RPS4Y1","RPS4X","TXLNGY", "TXLNG", "USP9Y", "USP9X", "XIST", "XIST", "TSIX", "TSIX"), nrow=2)
 pf <- profile(tcell, featuresinf=homologous)
 res <- target(tcell, pf, effect="highandlow", featuresinf=homologous, nmcov="age", model="log2")
-res$summary.model
+res
 
 }

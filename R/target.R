@@ -5,13 +5,15 @@
 #' classification is performed by targeting the feature data (adjusted by
 #' covariates and binarized) to the profiles computed in \link[teff]{profile}.
 #'
-#' The function allows the assessment of the heterogeneity of the
-#' treatment effect across the subpopulations by testing the association
-#' of the effect with the interaction between subpopulation classification
-#' and the treatment.
+#' The function tests whether the classification of the subjects stratifies
+#' the association of the treatment with the effect, testing the
+#' interaction between subpopulation classification and the treatment.
 #'
-#' Models on the effects to test the interaction include_ general lineal
+#' Models on the effects to test the interaction include the general lineal
 #' models, beta regression and proportional hazards models.
+#'
+#' The function can be used to target new individuals not used in the profiling
+#' and/or other types of effects expected from the treatment.
 #'
 #' @export
 #' @param  x a \code{list} with a fields \code{teffdata} and \code{features}.
@@ -40,7 +42,7 @@
 #' @param cores an integer with the number of cores for parallel
 #' computation (Default:1).
 #' @param ... additional parameters for the \code{image} function
-#' @return  a \code{list}  with fields:
+#' @return   a \code{list} of class \code{tarteff} with fields:
 #' \describe{
 #' \item{classification:}{classification of individuals into subpopulations of
 #' expected high and/or low treatment effects}
@@ -53,7 +55,7 @@
 #' homologous<- matrix(c("DDX3Y","DDX3X","KDM5D","KDM5C","PRKY","PRKX","RPS4Y1","RPS4X","TXLNGY", "TXLNG", "USP9Y", "USP9X", "XIST", "XIST", "TSIX", "TSIX"), nrow=2)
 #' pf <- profile(tcell, featuresinf=homologous)
 #' res <- target(tcell, pf, effect="highandlow", featuresinf=homologous, nmcov="age", model="log2")
-#' res$summary.model
+#' res
 #'
 target <- function(x, pteffObject, effect="high", featuresinf=NULL, plot.name= "image.pdf", model="gaussian", match=0.8, nmcov=NULL, cores=1, ...)
 {
@@ -208,51 +210,59 @@ target <- function(x, pteffObject, effect="high", featuresinf=NULL, plot.name= "
     dev.off()
   }
 
+  names(pf) <- colnames(features)
+  res <- list(classification=pf, summary.model=NULL, effect=effect, model=NULL, teffdata=NULL)
+
 
   ##test the profile-treatment interaction on the effect using the specified model
-  Y <- teffdata[,"eff"]
-  W <- as.numeric(as.factor(teffdata[,"t"]))==2
-  dat <- data.frame(Y=Y, W=W, pf=pf)
-  fla <- as.formula("Y ~ W*pf")
+  if(length(model)!=0)
+  {
+    Y <- teffdata[,"eff"]
+    W <- as.numeric(as.factor(teffdata[,"t"]))==2
+    dat <- data.frame(Y=Y, W=W, pf=pf)
+    fla <- as.formula("Y ~ W*pf")
 
-  #add covariates specified by nmcov
-  if(length(nmcov)>0){
-    dat <- data.frame(dat, data.frame(teffdata)[nmcov])
-    fla <- as.formula(paste("Y ~ W*pf", paste(nmcov, collapse="+"), sep="+"))
-  }
+    #add covariates specified by nmcov
+    if(length(nmcov)>0){
+      dat <- data.frame(dat, data.frame(teffdata)[nmcov])
+      fla <- as.formula(paste("Y ~ W*pf", paste(nmcov, collapse="+"), sep="+"))
+    }
 
-  if(model=="beta"){
-    pdf(plot.name)
-    Y[Y==0] <- 1e-5
-    Y[Y==1] <- 1-1e-5
-    m1 <- summary(betareg(fla, data=dat))
-  }else{
-    if(model=="hazard")
-    {
-      time <-  x$teffdata[,"time"]
-      event <- x$teffdata[,"event"]
-
-      dat <- data.frame(dat, time=time, event=event)
-
-      fla <- as.formula("Surv(eff, event) ~ W*pf")
-      if(length(nmcov)>0)
-        fla <- as.formula(paste("Surv(time, event) ~ W*pf", paste(nmcov, collapse = "+"), sep="+"))
-
-      m1 <- coxph(fla, data = dat)
-
+    if(model=="beta"){
+      pdf(plot.name)
+      Y[Y==0] <- 1e-5
+      Y[Y==1] <- 1-1e-5
+      m1 <- summary(betareg(fla, data=dat))
     }else{
-      if(model=="log2"){
-        Y <- log2(Y+1)
-        m1 <- summary(glm(fla, data=dat))
+      if(model=="hazard")
+      {
+        time <-  x$teffdata[,"time"]
+        event <- x$teffdata[,"event"]
+
+        dat <- data.frame(dat, time=time, event=event)
+
+        fla <- as.formula("Surv(eff, event) ~ W*pf")
+        if(length(nmcov)>0)
+          fla <- as.formula(paste("Surv(time, event) ~ W*pf", paste(nmcov, collapse = "+"), sep="+"))
+
+        m1 <- coxph(fla, data = dat)
+
       }else{
-        m1 <- summary(glm(fla, data=dat, family=model))
+        if(model=="log2"){
+          Y <- log2(Y+1)
+          m1 <- summary(glm(fla, data=dat))
+        }else{
+          m1 <- summary(glm(fla, data=dat, family=model))
+        }
       }
     }
+    names(pf) <- colnames(features)
+    res <- list(classification=pf, summary.model=m1, effect=effect, model=model, teffdata=data.frame(t=W, eff=Y))
   }
 
   #return profiles and results of fitted model
-  names(pf) <- colnames(features)
-  res <- list(classification=pf, summary.model=m1)
+  attr(res, "class") <- "tarteff"
+
   return(res)
 }
 
