@@ -66,5 +66,6 @@ data4teff <- feateff(gsm, tname="gender:ch1", reft=c("male", "female"),
                      effname="disease:ch1", refeff=c("healthy","arthritis"),
                      covnames="age:ch1", covtype="n",
                      sva=TRUE, UsegeneSymbol=TRUE)
+
 }
 }

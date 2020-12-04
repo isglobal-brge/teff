@@ -34,6 +34,7 @@
 #'                      effname="disease:ch1", refeff=c("healthy","arthritis"),
 #'                      covnames="age:ch1", covtype="n",
 #'                      sva=TRUE, UsegeneSymbol=TRUE)
+#'
 #'}
 
 

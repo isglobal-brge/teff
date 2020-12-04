@@ -15,14 +15,13 @@ Imports:
     methods,
     graphics,
     stats,
-    utils
 Suggests:
-    BiocGenerics,
     Biobase,
-    MultiDataSet,
+    BiocStyle,
     testthat,
     knitr,
     rmarkdown,
+    minfi,
 VignetteBuilder: knitr
 Encoding: UTF-8
 LazyData: true

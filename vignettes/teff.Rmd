@@ -1,0 +1,43 @@
+---
+title: "Assesing sexual-dimorphisms with teff"
+author: 
+  - name: Alejandro Caceres
+    affiliation: 
+    - ISGlobal, Barcelona, Spain
+    email: alejandro.cacere@isglobal.org 
+  - name: Luis A. Perez-Jurado
+    affiliation: 
+    - Genetics Unit, Universitat Pompeu Fabra, Barcelona, Spain
+  - name: Juan R. González
+    affiliation: 
+    - ISGlobal, Barcelona, Spain
+package: teff
+output: 
+  BiocStyle::html_document:
+    number_sections: true
+    toc_float: yes
+vignette: >
+  %\VignetteIndexEntry{Assesing sexual-dimorphisms with teff}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+
+# Introduction
+
+```{r}
+library(teff)
+```
+
+
+```{r}
+names(tcell)
+head(tcell$teffdata)
+```
+
+
+```{r}
+names(tcell)
+head(tcell$features)
+```
+

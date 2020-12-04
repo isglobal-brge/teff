@@ -70,10 +70,9 @@ adjusted features, binarized over the population means.
 
 The result is two profiles, associated with high and low
 treatment effects, given by logical vectors across the
-features. The logical values indicate at each position whether
-the values of the adjusted features should be higher than the
-features' population means for new individuals targeted
-by each profile. See \link[teff]{taget}.
+features. The logical value of a given profile at feature indicates whether the
+adjusted feature of a new individual should be higher than the feature population
+mean if the individual is successfully targeted by the profile. See \link[teff]{taget}.
 }
 \examples{
 data(tcell)
