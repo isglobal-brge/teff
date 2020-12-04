@@ -9,17 +9,17 @@ License: MIT + file LICENSE
 biocViews: DNAMethylation, Microarray, Software, WholeGenome
 Imports:
     parallel,
-    arm,
     grf,
     betareg,
     survival,
-    S4Vectors,
     methods,
     graphics,
     stats,
-    utils,
-    matrixStats
+    utils
 Suggests:
+    BiocGenerics,
+    Biobase,
+    MultiDataSet,
     testthat,
     knitr,
     rmarkdown,

@@ -16,10 +16,15 @@
 #' @import survival
 #' @import utils
 #' @import graphics
+#' @import BiocGenerics
+#' @import Biobase
+#' @import methods
+#' @import MultiDataSet
 #' @importFrom parallel mclapply
 #' @importFrom betareg betareg
 #' @importFrom stats lm glm
 #' @importFrom survival coxph
 #' @importFrom graphics boxplot points text legend
+#' @importFrom SummarizedExperiment assay
 #'
 NULL
