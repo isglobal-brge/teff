@@ -9,3 +9,7 @@ new individuals with feature data can be targeted and classified. If
 treatment and effect data is available for these new individuals the package can test
 whether the association between the treatment and the effect is indeed different
 across subpopulations.
+
+
+The package include functions to extract feature and treatment data from 
+transcriptomic and methylomic studies. 

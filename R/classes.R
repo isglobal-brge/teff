@@ -11,8 +11,7 @@
 #' pf <- profile(tcell, featuresinf=homologous)
 #' plot(pf)
 
-plot.pteff <- function(x, lb="Associated treatment effect", ...)
-{
+plot.pteff <- function(x, lb="Associated treatment effect", ...){
   if(class(x)!="pteff"){
     stop("x should be of class pteff")
   }

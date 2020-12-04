@@ -57,8 +57,13 @@
 #' res <- target(tcell, pf, effect="highandlow", featuresinf=homologous, nmcov="age", model="log2")
 #' res
 #'
-target <- function(x, pteffObject, effect="high", featuresinf=NULL, plot.name= "image.pdf", model="gaussian", match=0.8, nmcov=NULL, cores=1, ...)
-{
+target <- function(x,
+                   pteffObject,
+                   effect="high",
+                   featuresinf=NULL,
+                   plot.name= "image.pdf",
+                   model="gaussian",
+                   match=0.8, nmcov=NULL, cores=1, ...){
   teffdata <- x$teffdata
   features <- t(x$features)
 
@@ -91,8 +96,8 @@ target <- function(x, pteffObject, effect="high", featuresinf=NULL, plot.name= "
   #mean over features in featuresinf
   ############
 
-  if (is.matrix(featuresinf))
-  {
+  if (is.matrix(featuresinf)){
+
     selhomfeatures <- featuresinf[1, ] %in% colnames(X)
     selfeaturesinf <- featuresinf[, selhomfeatures]
     Xhom <- lapply(1:ncol(selfeaturesinf),
@@ -279,8 +284,10 @@ target <- function(x, pteffObject, effect="high", featuresinf=NULL, plot.name= "
 #' in its subpopulation (of high treatment effects).
 #' @return a logical vector indivcating the featrues that matched the profile
 
-targetprofile <- function(binfeatures, profileRef, match = 0.8)
-{
+targetprofile <- function(binfeatures,
+                          profileRef,
+                          match = 0.8){
+
   res <- sapply(1:nrow(binfeatures),
                 function(j){
                   map <- sapply(1:nrow(profileRef), function(i)

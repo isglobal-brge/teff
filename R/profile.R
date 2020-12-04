@@ -58,8 +58,12 @@
 #' homologous<- matrix(c("DDX3Y","DDX3X","KDM5D","KDM5C","PRKY","PRKX","RPS4Y1","RPS4X","TXLNGY", "TXLNG", "USP9Y", "USP9X", "XIST", "XIST", "TSIX", "TSIX"), nrow=2)
 #' profile(tcell, featuresinf=homologous)
 #'
-profile <- function(x, featuresinf=NULL, cores=1, seed=1234, plot.overlap=FALSE, quant=Inf)
-{
+profile <- function(x,
+                    featuresinf=NULL,
+                    cores=1,
+                    seed=1234,
+                    plot.overlap=FALSE,
+                    quant=Inf){
 
   ##Data set up
   ########################
@@ -93,8 +97,7 @@ profile <- function(x, featuresinf=NULL, cores=1, seed=1234, plot.overlap=FALSE,
   }
 
   #obtain residuals on XX of features data after adjusting for covariates in teffdata
-  XX <- parallel::mclapply(1:ncol(X), function(i)
-  {
+  XX <- parallel::mclapply(1:ncol(X), function(i){
     covvars <- colnames(teffdata)
     xi <- X[,i]
     fla <- paste("xi ~", paste(covvars, collapse="+"))
@@ -132,8 +135,7 @@ profile <- function(x, featuresinf=NULL, cores=1, seed=1234, plot.overlap=FALSE,
   #plots covariate overlap
   ########################
 
-  if(plot.overlap)
-  {
+  if(plot.overlap){
     if(ncol(X)>20) stop("plot.overlap not allowed for number of features > 20")
 
     print("... plots of t:eff interactions across tretments in interactions.pdf \n")
@@ -143,8 +145,8 @@ profile <- function(x, featuresinf=NULL, cores=1, seed=1234, plot.overlap=FALSE,
       cc[W.train] <- "red"
       cc[!W.train] <- "black"
 
-      for(ii in 1:ncol(X.train))
-      {
+      for(ii in 1:ncol(X.train)){
+
         plot(X.train[,ii], log2(Y.train+1), col=cc, main=colnames(X.train)[ii],pch=20, xlab="Mean expression residual", ylab="log2 cell abundancy")
         abline(lm(log2(Y.train+1)[W.train] ~ X.train[W.train,ii]),lwd=1.5, lty=2, col="red")
         abline(lm(log2(Y.train+1)[!W.train] ~ X.train[!W.train,ii]),lwd=1.5, lty=2)
@@ -188,8 +190,7 @@ profile <- function(x, featuresinf=NULL, cores=1, seed=1234, plot.overlap=FALSE,
   imp <- o.imp[1]
   featurecommon <- data.frame(featurenames=colnames(X), imp=v1)[o.imp,]
 
-  featureimp <- lapply(featuresinf, function(ll)
-  {
+  featureimp <- lapply(featuresinf, function(ll){
     #select features results in each study for common feature symbols
     out <- featurecommon[which(as.character(featurecommon$featurenames)%in%ll), ]
     #select probe with highest score
