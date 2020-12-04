@@ -10,7 +10,7 @@
 #'
 #' The result is two profiles, associated with high and low
 #' treatment effects, given by logical vectors across the
-#' features. The logical value of a given profile at feature indicate whether the
+#' features. The logical value of a given profile at feature indicates whether the
 #' adjusted feature of a new individual should be higher than the feature population
 #' mean if the individual is successfully targeted by the profile. See \link[teff]{taget}.
 #'
