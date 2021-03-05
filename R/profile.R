@@ -32,9 +32,11 @@
 #' @param plot.overlap a logical. If \code{TRUE} then plots the overlap of
 #' adjusted feature data across treatments. Parameter available for less
 #' than 20 features (Default: \code{FALSE}).
-#' @param quant a number from 1 to the number of features that selects the
-#' number of features with top information score from the causal forest.
+#' @param quant a number from 0 to 1 with the quantile of features to be selected
+#' with top information score from the causal forest.
 #' By default it selects all the features (Default: Inf).
+#' @param dup a logical that indicates whether the feature and teff data should
+#' be duplicated in case of small datasets.
 #' @return  a \code{list} of class \code{pteff} with fields:
 #' \describe{
 #' \item{profile:}{a \code{list} with fields \code{profhigh} and \code{proflow}
@@ -62,7 +64,8 @@ profile <- function(x,
                     cores=1,
                     seed=1234,
                     plot.overlap=FALSE,
-                    quant=Inf){
+                    quant=Inf,
+                    dup=FALSE){
 
   ##Data set up
   ########################
@@ -122,14 +125,21 @@ profile <- function(x,
   #randomly selection of a test comprising 20% of subjects
   set.seed(seed)
   sm <- sample(1:nrow(X),floor(nrow(X)*0.2))
+  smt <- (1:nrow(X))[-sm]
+
+  if(dup){
+    sm <- c(sm,sm)
+    smt <- c(smt,smt)
+  }
+
   X.test <- X[sm,]
   Y.test <- Y[sm]
   W.test <- W[sm]
 
   #randomly select a training
-  X.train <- X[-sm,]
-  Y.train <- Y[-sm]
-  W.train <- W[-sm]
+  X.train <- X[smt,]
+  Y.train <- Y[smt]
+  W.train <- W[smt]
 
   #plots covariate overlap
   ########################

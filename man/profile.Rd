@@ -10,7 +10,8 @@ profile(
   cores = 1,
   seed = 1234,
   plot.overlap = FALSE,
-  quant = Inf
+  quant = Inf,
+  dup = FALSE
 )
 }
 \arguments{
@@ -35,9 +36,12 @@ train (80\%) and test (20\%) sets.}
 adjusted feature data across treatments. Parameter available for less
 than 20 features (Default: \code{FALSE}).}
 
-\item{quant}{a number from 1 to the number of features that selects the
-number of features with top information score from the causal forest.
+\item{quant}{a number from 0 to 1 with the quantile of features to be selected
+with top information score from the causal forest.
 By default it selects all the features (Default: Inf).}
+
+\item{dup}{a logical that indicates whether the feature and teff data should
+be duplicated in case of small datasets.}
 }
 \value{
 a \code{list} of class \code{pteff} with fields:

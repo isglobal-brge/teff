@@ -2,7 +2,10 @@
 #' \link[teff]{profile}
 #'
 #' @param x object of class \code{pteff}
+#' @param rk object of class \code{vector}, if null treatments are
+#' plotted against their ranking, if not then they ara plotted against rk values.
 #' @param lb label of the y axis for treatment effect.
+#' @param xlab label of the x axis.
 #' @return A plot on the current graphics device.
 #' @export
 #' @examples
@@ -11,7 +14,7 @@
 #' pf <- profile(tcell, featuresinf=homologous)
 #' plot(pf)
 
-plot.pteff <- function(x, lb="Associated treatment effect", ...){
+plot.pteff <- function(x, rk=NULL, lb="Associated treatment effect", xlab = "Subject Ranking", ...){
   if(class(x)!="pteff"){
     stop("x should be of class pteff")
   }
@@ -29,9 +32,14 @@ plot.pteff <- function(x, lb="Associated treatment effect", ...){
   coltreatment[x$treatment == 1] <- "blue"
 
   ranktau <- rank(x$predictions)
+
+  if(!is.null(rk))
+    ranktau <- rk
+
+
   plot(ranktau, x$predictions,
        ylim = c(min(yrange), max(yrange)), type = "p",
-       pch = 16, xlab = "Subject Ranking", ylab="",
+       pch = 16, ylab="", xlab=xlab,
        col = coltreatment, ...)
 
   title(ylab=lb, line=2)
@@ -44,8 +52,8 @@ plot.pteff <- function(x, lb="Associated treatment effect", ...){
 
   lines(c(-10,500), c(0,0), lwd=1.5, lty=2, col="red")
 
-  legend("bottomright", c("Not treated", "Treated"), pch=16, col=c("orange","blue"), bty="n" )
-  legend("topleft", c("significant"), lty=1, col=3, bty="n" )
+  legend("topright", c("Not treated", "Treated"), pch=16, col=c("orange","blue"), bty="n" )
+  legend("bottomleft", c("significant"), lty=1, col=3, bty="n" )
 
 }
 

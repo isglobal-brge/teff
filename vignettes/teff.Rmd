@@ -1,5 +1,5 @@
 ---
-title: "Assesing sexual-dimorphisms with teff"
+title: "Profiling sexual-dimorphisms with teff"
 author: 
   - name: Alejandro Caceres
     affiliation: 
@@ -17,13 +17,20 @@ output:
     number_sections: true
     toc_float: yes
 vignette: >
-  %\VignetteIndexEntry{Assesing sexual-dimorphisms with teff}
+  %\VignetteIndexEntry{Profiling sexual-dimorphisms with teff}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
 
 
 # Introduction
+
+<code>teff</code> is a software package to profile subpopulations that are responsive to a treatment. It is based on inferences made by random causal forest as implemented in the package <core>grf</code> by Tibshirani et al. 
+
+The aim is to find a profile across some features that identify the subpopulation where the treatment effect is high; that is a group where treated individuals showed a high effect in relation to not-treated individuals. We also consider the profile where the treated individuals show a low effect in relation to the not-treated individuals. In addition, there is the subpopulation where no effect differences are observed between treatments we call neutral. The package therefore aims to detect the subpopulatios with high, low and neutral treatment effects, characterized by a set of features.    
+
+
+Our implementation is flexible and allows the use of any feature
 
 ```{r}
 library(teff)

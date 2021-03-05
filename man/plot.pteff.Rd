@@ -5,12 +5,23 @@
 \title{Plots inferred treatment effects of individuals from
 \link[teff]{profile}}
 \usage{
-\method{plot}{pteff}(x, lb = "Associated treatment effect", ...)
+\method{plot}{pteff}(
+  x,
+  rk = NULL,
+  lb = "Associated treatment effect",
+  xlab = "Subject Ranking",
+  ...
+)
 }
 \arguments{
 \item{x}{object of class \code{pteff}}
 
+\item{rk}{object of class \code{vector}, if null treatments are
+plotted against their ranking, if not then they ara plotted against rk values.}
+
 \item{lb}{label of the y axis for treatment effect.}
+
+\item{xlab}{label of the x axis.}
 }
 \value{
 A plot on the current graphics device.
