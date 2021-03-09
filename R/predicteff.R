@@ -217,9 +217,11 @@ predicteff <- function(x,
   #extract confidence intervals
   cl <- tau.hat$predictions - 1.96*sigma.hat
   cu <- tau.hat$predictions + 1.96*sigma.hat
+  #output
+  res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1)
 
 
-  #profiling
+  #add profiling to output
   if (profile){
 
     sighethigh <- (cl>0) + 1
@@ -265,7 +267,6 @@ predicteff <- function(x,
     res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1, profile=list(profhigh=profhigh,proflow=proflow))
   }
 
-  res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1)
 
   attr(res, "class") <- "pteff"
 
