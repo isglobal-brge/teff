@@ -65,17 +65,10 @@ plot.pteff <- function(x, rk=NULL, lb="Associated treatment effect", xlab = "Sub
 
 print.pteff <- function(x){
 
-  p1 <- x$profile$profhigh[1,1:min(5,ncol(x$profile$profhigh))]
+  p1 <- x$predictions
   cat("object of class: pteff \n")
-  cat("First entries of binary profile for high treatment effect: \n")
+  cat("Estimated treatment effects in $predictions: \n")
   print(p1)
-
-  p1 <- x$profile$profhigh[1,1:min(5,ncol(x$profile$proflowh))]
-  cat("... access full profile with $profile$profhigh\n")
-  cat("\n")
-  cat("First entries of binary profile for low treatment effect: \n")
-  print(p1)
-  cat("... access full profile with $profile$proflow\n")
 }
 
 #' Plots inferred treatment effects of individuals from

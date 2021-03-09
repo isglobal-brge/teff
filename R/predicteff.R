@@ -1,4 +1,4 @@
-#' Profiles of individuals with significantly high and low treatment effects
+#' Predicts treatmet effects of individuals in a randon subsample
 #'
 #' @details This function sets up feature and treatment-effects data, fits
 #' random causal forest and identify the individuals with significant
@@ -29,19 +29,18 @@
 #' computation (Default:1)
 #' @param seed and integer with the random seed for splitting data into
 #' train (80%) and test (20%) sets.
-#' @param plot.overlap a logical. If \code{TRUE} then plots the overlap of
+#' @param plot.overlap a logical. If \code{TRUE} then it plots the overlap of
 #' adjusted feature data across treatments. Parameter available for less
 #' than 20 features (Default: \code{FALSE}).
 #' @param quant a number from 0 to 1 with the quantile of features to be selected
 #' with top information score from the causal forest.
 #' By default it selects all the features (Default: Inf).
+#' @param profile a logical. If \code{TRUE} then it estimates a profile of binarized
+#' feature data for the individuals with significantly high and low treatment effects, respectively.
 #' @param dup a logical that indicates whether the feature and teff data should
 #' be duplicated in case of small datasets.
 #' @return  a \code{list} of class \code{pteff} with fields:
 #' \describe{
-#' \item{profile:}{a \code{list} with fields \code{profhigh} and \code{proflow}
-#' that are matrices with binarized feature data for the individuals with
-#' significantly high and low treatment effects, respectively.}
 #' \item{predictions:}{a \code{vector} with the estimated treatment effect
 #' of the individuals in the test set.}
 #' \item{featurenames:}{a \code{vector} with the names of the features used.}
@@ -51,21 +50,25 @@
 #' intervals for the estimated treatment effect.}
 #' \item{subsids:}{a \code{vector} with ids of subjects in the test set.}
 #' \item{treatment:}{a \code{vector} with treatment effect in the test set.}
+#' \item{profile:}{a \code{list} with fields \code{profhigh} and \code{proflow}
+#' that are matrices with binarized feature data for the individuals with
+#' significantly high and low treatment effects, respectively.}
 #' }
 #' @export
 #'
 #' @examples
 #' data(tcell)
 #' homologous<- matrix(c("DDX3Y","DDX3X","KDM5D","KDM5C","PRKY","PRKX","RPS4Y1","RPS4X","TXLNGY", "TXLNG", "USP9Y", "USP9X", "XIST", "XIST", "TSIX", "TSIX"), nrow=2)
-#' profile(tcell, featuresinf=homologous)
+#' predicteff(tcell, featuresinf=homologous, profile=TRUE)
 #'
-profile <- function(x,
+predicteff <- function(x,
                     featuresinf=NULL,
                     cores=1,
                     seed=1234,
                     plot.overlap=FALSE,
                     quant=Inf,
-                    dup=FALSE){
+                    dup=FALSE,
+                    profile=FALSE){
 
   ##Data set up
   ########################
@@ -215,47 +218,54 @@ profile <- function(x,
   cl <- tau.hat$predictions - 1.96*sigma.hat
   cu <- tau.hat$predictions + 1.96*sigma.hat
 
-  sighethigh <- (cl>0) + 1
-  sighetlow <-  (cu<0) + 1
+
+  #profiling
+  if (profile){
+
+    sighethigh <- (cl>0) + 1
+    sighetlow <-  (cu<0) + 1
 
 
-  #get profile for top featurenames define by quant
-  cutoff <- max(which(cumsum(featureimp$imp) < quant))
-  colimp <- featureimp$imp[1:cutoff]
+    #get profile for top featurenames define by quant
+    cutoff <- max(which(cumsum(featureimp$imp) < quant))
+    colimp <- featureimp$imp[1:cutoff]
 
-  #select trasncription profiles (residuals) for featurenames passing the cutoff
-  whimp <- as.numeric(rownames(featureimp))
-  Xscale <- scale(X.test)[, whimp[1:cutoff]]
+    #select trasncription profiles (residuals) for featurenames passing the cutoff
+    whimp <- as.numeric(rownames(featureimp))
+    Xscale <- scale(X.test)[, whimp[1:cutoff]]
 
-  #Extract a binarized profiles across important featurenames, where featurenames up or
-  #downregulated in their study
-  profall <- lapply(1:ncol(Xscale), function(i) (Xscale[,i] > 0))
-  profall <- do.call(cbind, profall)
+    #Extract a binarized profiles across important featurenames, where featurenames up or
+    #downregulated in their study
+    profall <- lapply(1:ncol(Xscale), function(i) (Xscale[,i] > 0))
+    profall <- do.call(cbind, profall)
 
-  #Profiles of individuals with significant heterogeneous treatment-effects
-  profhigh <- profall[sighethigh==2,]
-  proflow <- profall[sighetlow==2,]
+    #Profiles of individuals with significant heterogeneous treatment-effects
+    profhigh <- profall[sighethigh==2,]
+    proflow <- profall[sighetlow==2,]
 
 
-  if(is.matrix(profhigh)==FALSE)
-    profhigh <- matrix(profhigh, ncol=ncol(profall))
+    if(is.matrix(profhigh)==FALSE)
+      profhigh <- matrix(profhigh, ncol=ncol(profall))
 
-  if(is.matrix(proflow)==FALSE)
-    proflow <- matrix(proflow, ncol=ncol(profall))
+    if(is.matrix(proflow)==FALSE)
+      proflow <- matrix(proflow, ncol=ncol(profall))
 
-  #summarize subject profiles into a single one representing individuals with
-  #high treatment effects
-  profhigh <- matrix(colMeans(profhigh, na.rm=TRUE)>0.5, nrow=1)
+    #summarize subject profiles into a single one representing individuals with
+    #high treatment effects
+    profhigh <- matrix(colMeans(profhigh, na.rm=TRUE)>0.5, nrow=1)
 
-  #and low treatment effects
-  proflow <- matrix(colMeans(proflow, na.rm=TRUE)>0.5, nrow=1)
+    #and low treatment effects
+    proflow <- matrix(colMeans(proflow, na.rm=TRUE)>0.5, nrow=1)
 
-   colnames(profhigh) <- colnames(Xscale)
-  colnames(proflow) <- colnames(Xscale)
+    colnames(profhigh) <- colnames(Xscale)
+    colnames(proflow) <- colnames(Xscale)
 
-  ##########
-  #gather output
-  res <- list(profile=list(profhigh=profhigh,proflow=proflow), predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1)
+    ##########
+    #gather output
+    res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1, profile=list(profhigh=profhigh,proflow=proflow))
+  }
+
+  res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1)
 
   attr(res, "class") <- "pteff"
 

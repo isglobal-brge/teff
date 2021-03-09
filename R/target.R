@@ -53,7 +53,7 @@
 #' @examples
 #' data(tcell)
 #' homologous<- matrix(c("DDX3Y","DDX3X","KDM5D","KDM5C","PRKY","PRKX","RPS4Y1","RPS4X","TXLNGY", "TXLNG", "USP9Y", "USP9X", "XIST", "XIST", "TSIX", "TSIX"), nrow=2)
-#' pf <- profile(tcell, featuresinf=homologous)
+#' pf <- predicteff(tcell, featuresinf=homologous, profile=TRUE)
 #' res <- target(tcell, pf, effect="highandlow", featuresinf=homologous, nmcov="age", model="log2")
 #' res
 #'
