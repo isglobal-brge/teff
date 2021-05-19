@@ -2,7 +2,7 @@
 % Please edit documentation in R/predicteff.R
 \name{predicteff}
 \alias{predicteff}
-\title{Predicts treatmet effects of individuals in a randon subsample}
+\title{Predicts treatment effects on an outcome for individuals  randomly sampled from the entire dataset (default 20\%).}
 \usage{
 predicteff(
   x,
@@ -18,7 +18,7 @@ predicteff(
 \arguments{
 \item{x}{a \code{list} with a fields \code{teffdata} and \code{features}.
 \code{teffdata} is a \code{data.frame} (or \code{matrix}) with the treatment
-\code{$t} and effect \code{$eff} variables, and covariates across
+\code{$t} and the outcome \code{$eff} variables, and covariates across
 subjects. \code{features} is a \code{matrix} which the profiling
 is of subjects if performed. The features are adjusted for the covariates
 on the \code{teffdata} before fitting the causal random forest forest.}
@@ -45,7 +45,7 @@ By default it selects all the features (Default: Inf).}
 be duplicated in case of small datasets.}
 
 \item{profile}{a logical. If \code{TRUE} then it estimates a profile of binarized
-feature data for the individuals with significantly high and low treatment effects, respectively.}
+feature data for the individuals with significantly positive and negative treatment effects, respectively.}
 }
 \value{
 a \code{list} of class \code{pteff} with fields:
@@ -59,24 +59,27 @@ intervals for the estimated treatment effect.}
 intervals for the estimated treatment effect.}
 \item{subsids:}{a \code{vector} with ids of subjects in the test set.}
 \item{treatment:}{a \code{vector} with treatment effect in the test set.}
-\item{profile:}{a \code{list} with fields \code{profhigh} and \code{proflow}
+\item{profile:}{a \code{list} with fields \code{profpositive} and \code{profnegative}
 that are matrices with binarized feature data for the individuals with
-significantly high and low treatment effects, respectively.}
+significantly positive and negative treatment effects, respectively.}
 }
 }
 \description{
-Predicts treatmet effects of individuals in a randon subsample
+Predicts treatment effects on an outcome for individuals  randomly sampled from the entire dataset (default 20\%).
 }
 \details{
 This function sets up feature and treatment-effects data, fits
 random causal forest and identify the individuals with significant
-treatment effects. Individuals with significant treatment effects
+treatment effects. Each individual is characterized by a set of feature data and the
+the effect of treatment on the individual is given by the estimated difference of an
+outcome between treating and and not treating when the feature data are kept constant.
+Individuals with significant treatment effects
 are considered for those whose confidence intervals for the treatment
-estimate do not overlap 0. Single consensus profiles of individuals with
-high, and low, treatment effects are obtained from majority votes of
+estimate do not overlap 0. Consensus profiles of individuals with
+positive, and negative, treatment effects are obtained from majority votes of
 adjusted features, binarized over the population means.
 
-The result is two profiles, associated with high and low
+The result is two profiles, associated with positive and negative
 treatment effects, given by logical vectors across the
 features. The logical value of a given profile at feature indicates whether the
 adjusted feature of a new individual should be higher than the feature population

@@ -1,43 +1,46 @@
-#' Targets individuals into groups of high, low or neutral treatment effects
+#' Targets individuals into groups of positive, negative or neutral effect of treatment on an outcome.
 #'
 #' @details This function uses feature data of individuals to classify them
-#' into subpopulations associated with high and low treatment effects. The
+#' into subpopulations associated with the positive and negative effect of treating them
+#' according to a given outcome. The
 #' classification is performed by targeting the feature data (adjusted by
 #' covariates and binarized) to the profiles computed in \link[teff]{profile}.
 #'
-#' The function tests whether the classification of the subjects stratifies
-#' the association of the treatment with the effect, testing the
-#' interaction between subpopulation classification and the treatment.
+#' The function tests whether the classification of the subjects into groups of positive
+#' and negative treatment effects modulates
+#' the association of the treatment with the outcome, fitting a model for the outcome as function of
+#' the interaction between the classification and the treatment.
 #'
-#' Models on the effects to test the interaction include the general lineal
+#' Models on the outcome to test the interaction include general lineal
 #' models, beta regression and proportional hazards models.
 #'
 #' The function can be used to target new individuals not used in the profiling
-#' and/or other types of effects expected from the treatment.
+#' and/or on the effects of other types of outcomes also expected from the treatment.
 #'
 #' @export
 #' @param  x a \code{list} with a fields \code{teffdata} and \code{features}.
-#' \code{teffdata} the data for treatment, effect and covariates across
+#' \code{teffdata} the data for treatment, outcome on which the effect is measured and covariates across
 #' subjects. \code{features} data is the data on which the profiling
 #' is done. Adjusted features for the variables on the \code{teffdata} are
 #' used to fit the forest and extract the profiles of individuals with
 #' significant  treatments.
 #' @param pteffObject object of class \code{pteff}
-#' @param effect \code{character} with one of the values: "high", "low", "highandlow", indicating
-#' which subpopulation to be targeted: subpopulation with high treatment effect only, low
-#' treatment effect only or both, respectively (Default: high).
+#' @param effect \code{character} with one of the values: "positive", "negative", "positiveandnegative", indicating
+#' which subpopulations to be targeted: subpopulation with positive treatment effects only, negative
+#' treatment effects only or both, respectively (Default: positive).
 #' @param featuresinf a \code{vector} of characters with the names of the
 #' features to be used; a \code{matrix} of characters whose columns are
 #' names of features whose values will be averaged (Default:NULL).
-#' @param plot.name \code{character} indicating a pdf file where the image of the targeting will be plotted
+#' @param plot \code{logical} indicating a whether a plot of the targeting will be produced
+#' @param lb \code{character} indicating labels for features plot.
 #' @param model \code{character} with one of the values corresponding to the family argument of a
-#' general linear model (\link[stats]{glm}), such as: "gaussian", "binomial", etc. It also allows "beta" for beta
+#' general linear model for the outcome (\link[stats]{glm}), such as: "gaussian", "binomial", etc. It also allows "beta" for beta
 #' regression, "hazard" for proportional hazards model \link[survival]{coxph}, and "log2" for log2
 #' transformation of the effects (Default: "gaussian").
 #' @param match \code{numeric} value between 0 and 1 indicating the level of the match for the targeing
-#' across all the binarized features in the profile. A value of 1 means that all the binarized
-#' features must take identical values in the profile (i,e "high") for an individual to be clsssified
-#' in its subpopulation (of high treatment effects).
+#' across all the binarized features in the profile (positive or negative). A value of 1 means that all the binarized
+#' features must take identical values in the profile (i,e "positive") for an individual to be clsssified
+#' in its subpopulation (of positive treatment effects).
 #' @param nmcov vector of \code{character} with the names of the covariates to be included in the models.
 #' @param cores an integer with the number of cores for parallel
 #' computation (Default:1).
@@ -45,32 +48,34 @@
 #' @return   a \code{list} of class \code{tarteff} with fields:
 #' \describe{
 #' \item{classification:}{classification of individuals into subpopulations of
-#' expected high and/or low treatment effects}
-#' \item{summary.model:}{a \code{summary} of the model used to test the interaction between
-#' the profile ("highandlow": high=1, neutral=0, low=-1; "high": high=1, neutral=0,
-#' "low": low=1, neutral=0) with the effect.}
+#' expected positive and/or negative treatment effects}
+#' \item{summary.model:}{a \code{summary} of the model used to test the association of the outcome with the
+#' interaction of between
+#' the profile ("positiveandnegative": positive=1, neutral=0, negative=-1; "positive": positive=1, neutral=0,
+#' "negative": negative=1, neutral=0) with the effect.}
 #' }
 #' @examples
 #' data(tcell)
 #' homologous<- matrix(c("DDX3Y","DDX3X","KDM5D","KDM5C","PRKY","PRKX","RPS4Y1","RPS4X","TXLNGY", "TXLNG", "USP9Y", "USP9X", "XIST", "XIST", "TSIX", "TSIX"), nrow=2)
 #' pf <- predicteff(tcell, featuresinf=homologous, profile=TRUE)
-#' res <- target(tcell, pf, effect="highandlow", featuresinf=homologous, nmcov="age", model="log2")
+#' res <- target(tcell, pf, effect="positiveandnegative", featuresinf=homologous, nmcov="age", model="log2")
 #' res
 #'
 target <- function(x,
                    pteffObject,
-                   effect="high",
+                   effect="positive",
                    featuresinf=NULL,
-                   plot.name= "image.pdf",
+                   plot=TRUE,
+                   lb=NULL,
                    model="gaussian",
                    match=0.8, nmcov=NULL, cores=1, ...){
   teffdata <- x$teffdata
   features <- t(x$features)
 
-  if(effect=="high"){
-    nmfeatures <- unlist(strsplit(colnames(pteffObject$profile$profhigh), "-"))
+  if(effect=="positive"){
+    nmfeatures <- unlist(strsplit(colnames(pteffObject$profile$profpositive), "-"))
   }else{
-    nmfeatures <- unlist(strsplit(colnames(pteffObject$profile$proflow), "-"))
+    nmfeatures <- unlist(strsplit(colnames(pteffObject$profile$profnegative), "-"))
   }
   nmfeatures <- unique(nmfeatures)
 
@@ -145,74 +150,85 @@ target <- function(x,
   #compare the binarized feature data with the reference profiles (prof)
   #and compute the highest level of matching (80%) useing targetprofile()
 
-  if(effect=="high" | effect=="highandlow"){
-    pref <- pteffObject$profile$profhigh
+  if(effect=="positive" | effect=="positiveandnegative"){
+    pref <- pteffObject$profile$profpositive
     pref <- matrix(pref[,colnames(profcomp)], nrow=nrow(pref))
     pf1 <- targetprofile(binfeatures=profcomp, profileRef=pref, match=match)
     names(pf1) <- colnames(features)
   }
 
-  if(effect=="low" | effect=="highandlow"){
-    pref <- pteffObject$profile$proflow
+  if(effect=="negative" | effect=="positiveandnegative"){
+    pref <- pteffObject$profile$profnegative
     pref <- matrix(pref[,colnames(profcomp)], nrow=nrow(pref))
     pf2 <- targetprofile(binfeatures=profcomp, profileRef= pref,  match=match)
     names(pf2) <- colnames(features)
   }
 
-  if(effect=="highandlow"){
+  if(effect=="positiveandnegative"){
     pf3 <- pf1
     pf3[pf2==1]<- -1
     names(pf3) <- colnames(features)
   }
 
-  if(effect=="high") pf <-as.numeric(pf1)
-  if(effect=="low") pf <-as.numeric(pf2)
-  if(effect=="highandlow") pf <-as.numeric(pf3)
+  if(effect=="positive") pf <-as.numeric(pf1)
+  if(effect=="negative") pf <-as.numeric(pf2)
+  if(effect=="positiveandnegative") pf <-as.numeric(pf3)
 
-  #Produce plots of targeted individuals
-  if(effect=="high"){
-    pdf(plot.name)
-    im1 <- t(rbind(profcomp[!pf1,],profcomp[pf1,]))
-    image(im1, axes = FALSE, ylab = "Subjects",
-          xlab="Genes", col = gray.colors(2))
-    whchprof <- sum(!pf1)/length(pf1)
-    lines(c(-1,100), c(whchprof,whchprof), col="red", lwd=2)
+  if(plot==TRUE){
+    #Produce plots of targeted individuals
+    if(effect=="positive"){
+      im1 <- rbind(profcomp[pf1,], profcomp[!pf1,])
 
-    axis(1, at = seq(0,1,length=nrow(im1)) , labels = colnames(Xscale), cex=0.7)
-    axis(2, at =  (1+whchprof)/2  , labels = c("Positive"))
-    dev.off()
-  }
+      raster::plot(raster::raster(im1), axes = FALSE, box=FALSE , ylab = "",xlab="", col = c( "green4", "red4"), legend = FALSE)
 
-  if(effect=="low"){
-    pdf(plot.name)
-    im1 <- t(rbind(profcomp[!pf2,], profcomp[pf2,]))
-    image(im1, axes = FALSE, ylab = "Subjects",
-          xlab="Features", col = gray.colors(2))
-    whchprof <- sum(!pf2)/length(pf2)
-    lines(c(-1,100), c(whchprof,whchprof), col="red", lwd=2)
+      whchprof <- sum(!pf1)/length(pf1)
+      lines(c(0,1), c(whchprof,whchprof), col="black", lwd=2)
 
-    axis(1, at = seq(0,1,length=nrow(im1)), labels = colnames(Xscale), cex=0.7)
-    axis(2, at =  (1+whchprof)/2  , labels = c("Negative"))
-    dev.off()
-  }
+      if(is.null(lb))
+        lb <- colnames(Xscale)
 
-  if(effect=="highandlow"){
-    pdf(plot.name)
-    im1 <- t(rbind(profcomp[pf3==-1,],profcomp[pf3==0,],profcomp[pf3==1,] ))
-    image(im1, axes = FALSE, ylab = "Subjects",
-          xlab="Genes", col = gray.colors(2), ...)
-    pff <- pf3==1
-    whchprof1 <- sum(!pff)/length(pff)
-    lines(c(-1,100),c(whchprof1,whchprof1),col="red", lwd=2)
+      ll <- ncol(im1)
+      axis(1, at = seq(1/ll/2,1-1/ll/2,length=ll), labels = lb[1:ncol(Xscale)], cex.axis = 0.7, las = 2)
+      axis(2, at =  c((1+whchprof)/2, (whchprof)/2)  , labels = c("Positive", "Neutral"), pos=0)    }
 
-    pff <- pf3==-1
-    whchprof2 <- 1-sum(!pff)/length(pff)
-    lines(c(-1,100),c(whchprof2,whchprof2),col="green", lwd=2)
+    if(effect=="negative"){
+      im1 <- rbind(profcomp[pf2,], profcomp[!pf2,])
 
-    axis(1, at = seq(0,1,length=nrow(im1)) , labels = colnames(Xscale), cex.axis=0.7)
-    axis(2, at = c((whchprof1+1)/2,whchprof2/2), labels = c("Positive", "Negative"))
+      plot(raster::raster(im1), axes = FALSE, box=FALSE , ylab = "",xlab="", col = c("red4", "green4"), legend = FALSE)
 
-    dev.off()
+      whchprof <- sum(!pf2)/length(pf2)
+      lines(c(0,1), c(whchprof,whchprof), col="black", lwd=2)
+
+      if(is.null(lb))
+        lb <- colnames(Xscale)
+
+      ll <- ncol(im1)
+      axis(1, at = seq(1/ll/2,1-1/ll/2,length=ll), labels = lb[1:ncol(Xscale)], cex.axis = 0.7, las = 2)
+      axis(2, at =  c((1+whchprof)/2, (whchprof)/2)  , labels = c("Negative", "Neutral"), pos=0)
+    }
+
+    if(effect=="positiveandnegative"){
+      im1 <- rbind(profcomp[pf3==-1,],profcomp[pf3==0,],profcomp[pf3==1,] )
+
+      plot(raster::raster(im1), axes = FALSE, box=FALSE , ylab = "",xlab="", col = c("red4", "green4"), legend = FALSE)
+
+      pff <- pf3==-1
+      whchprof1 <- sum(!pff)/length(pff)
+      lines(c(0,1),c(whchprof1,whchprof1),col="black", lwd=2)
+
+      pff <- pf3==1
+      whchprof2 <- 1-sum(!pff)/length(pff)
+      lines(c(0,1),c(whchprof2,whchprof2),col="black", lwd=2)
+
+
+      if(is.null(lb))
+       lb <- colnames(Xscale)
+
+      ll <- ncol(im1)
+      axis(1, at = seq(1/ll/2,1-1/ll/2,length=ll) , labels = lb[1:ncol(Xscale)], cex.axis=0.6, las=2)
+      axis(2, at = c((whchprof1+1)/2,whchprof2/2), labels = c("Positive", "Negative"), pos=0)
+    }
+
   }
 
   names(pf) <- colnames(features)
@@ -276,13 +292,13 @@ target <- function(x,
 #' @keywords internal
 #' @param binfeatures binarized feature data with respect to the mean value over
 #' the subjects in the feature data to be targeted
-#' @param  profileRef reference profile of high or low treatment effects as obtained by
+#' @param  profileRef reference profile of positive or negative treatment effects as obtained by
 #' \link[teff]{profile}
 #' @param match \code{numeric} value between 0 and 1 indicating the level of the match for the targeing
 #' across all the binarized features in the profile. A value of 1 means that all the binarized
-#' features must take identical values in the profile (i,e "high") for an individual to be clsssified
-#' in its subpopulation (of high treatment effects).
-#' @return a logical vector indivcating the featrues that matched the profile
+#' features must take identical values in the profile (i,e "positive") for an individual to be clsssified
+#' in its subpopulation (of positive treatment effects).
+#' @return a logical vector indicating the features that matched the profile
 
 targetprofile <- function(binfeatures,
                           profileRef,

@@ -1,14 +1,17 @@
-#' Predicts treatmet effects of individuals in a randon subsample
+#' Predicts treatment effects on an outcome for individuals  randomly sampled from the entire dataset (default 20%).
 #'
 #' @details This function sets up feature and treatment-effects data, fits
 #' random causal forest and identify the individuals with significant
-#' treatment effects. Individuals with significant treatment effects
+#' treatment effects. Each individual is characterized by a set of feature data and the
+#' the effect of treatment on the individual is given by the estimated difference of an
+#' outcome between treating and and not treating when the feature data are kept constant.
+#' Individuals with significant treatment effects
 #' are considered for those whose confidence intervals for the treatment
-#' estimate do not overlap 0. Single consensus profiles of individuals with
-#' high, and low, treatment effects are obtained from majority votes of
+#' estimate do not overlap 0. Consensus profiles of individuals with
+#' positive, and negative, treatment effects are obtained from majority votes of
 #' adjusted features, binarized over the population means.
 #'
-#' The result is two profiles, associated with high and low
+#' The result is two profiles, associated with positive and negative
 #' treatment effects, given by logical vectors across the
 #' features. The logical value of a given profile at feature indicates whether the
 #' adjusted feature of a new individual should be higher than the feature population
@@ -17,7 +20,7 @@
 #' @export
 #' @param x a \code{list} with a fields \code{teffdata} and \code{features}.
 #' \code{teffdata} is a \code{data.frame} (or \code{matrix}) with the treatment
-#' \code{$t} and effect \code{$eff} variables, and covariates across
+#' \code{$t} and the outcome \code{$eff} variables, and covariates across
 #' subjects. \code{features} is a \code{matrix} which the profiling
 #' is of subjects if performed. The features are adjusted for the covariates
 #' on the \code{teffdata} before fitting the causal random forest forest.
@@ -36,7 +39,7 @@
 #' with top information score from the causal forest.
 #' By default it selects all the features (Default: Inf).
 #' @param profile a logical. If \code{TRUE} then it estimates a profile of binarized
-#' feature data for the individuals with significantly high and low treatment effects, respectively.
+#' feature data for the individuals with significantly positive and negative treatment effects, respectively.
 #' @param dup a logical that indicates whether the feature and teff data should
 #' be duplicated in case of small datasets.
 #' @return  a \code{list} of class \code{pteff} with fields:
@@ -50,9 +53,9 @@
 #' intervals for the estimated treatment effect.}
 #' \item{subsids:}{a \code{vector} with ids of subjects in the test set.}
 #' \item{treatment:}{a \code{vector} with treatment effect in the test set.}
-#' \item{profile:}{a \code{list} with fields \code{profhigh} and \code{proflow}
+#' \item{profile:}{a \code{list} with fields \code{profpositive} and \code{profnegative}
 #' that are matrices with binarized feature data for the individuals with
-#' significantly high and low treatment effects, respectively.}
+#' significantly positive and negative treatment effects, respectively.}
 #' }
 #' @export
 #'
@@ -95,7 +98,7 @@ predicteff <- function(x,
     featuresinf <- nms
 
   }else{
-
+    if(is.null(featuresinf)) featuresinf <- rownames(features)
     selfeatures <- which(rownames(features)%in%featuresinf)
     X <- t(features[as.numeric(selfeatures), ])
     nms <- colnames(X)
@@ -150,7 +153,7 @@ predicteff <- function(x,
   if(plot.overlap){
     if(ncol(X)>20) stop("plot.overlap not allowed for number of features > 20")
 
-    print("... plots of t:eff interactions across tretments in interactions.pdf \n")
+    print("... plots of t:eff interactions on the outcome in interactions.pdf \n")
 
     pdf("./interactions.pdf")
       cc <- W.train
@@ -159,7 +162,7 @@ predicteff <- function(x,
 
       for(ii in 1:ncol(X.train)){
 
-        plot(X.train[,ii], log2(Y.train+1), col=cc, main=colnames(X.train)[ii],pch=20, xlab="Mean expression residual", ylab="log2 cell abundancy")
+        plot(X.train[,ii], log2(Y.train+1), col=cc, main=colnames(X.train)[ii],pch=20, xlab="Mean expression residual", ylab="Outcome")
         abline(lm(log2(Y.train+1)[W.train] ~ X.train[W.train,ii]),lwd=1.5, lty=2, col="red")
         abline(lm(log2(Y.train+1)[!W.train] ~ X.train[!W.train,ii]),lwd=1.5, lty=2)
         legend("topleft",legend=c("Not treated", "Treated"), col=c("black", "red"), pch=20, cex=0.7)
@@ -220,12 +223,15 @@ predicteff <- function(x,
   #output
   res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1)
 
-
+  if(dup==TRUE){
+    selnotdup <- duplicated(subsids[sm])
+    res <- list(predictions=tau.hat$predictions[selnotdup], featurenames=featureimp,  cl=cl[selnotdup], cu=cu[selnotdup], subsids=subsids[sm][selnotdup], treatment = (W.test*1)[selnotdup])
+  }
   #add profiling to output
   if (profile){
 
-    sighethigh <- (cl>0) + 1
-    sighetlow <-  (cu<0) + 1
+    sighetpositive <- (cl>0) + 1
+    sighetnegative <-  (cu<0) + 1
 
 
     #get profile for top featurenames define by quant
@@ -242,29 +248,29 @@ predicteff <- function(x,
     profall <- do.call(cbind, profall)
 
     #Profiles of individuals with significant heterogeneous treatment-effects
-    profhigh <- profall[sighethigh==2,]
-    proflow <- profall[sighetlow==2,]
+    profpositive <- profall[sighetpositive==2,]
+    profnegative <- profall[sighetnegative==2,]
 
 
-    if(is.matrix(profhigh)==FALSE)
-      profhigh <- matrix(profhigh, ncol=ncol(profall))
+    if(is.matrix(profpositive)==FALSE)
+      profpositive <- matrix(profpositive, ncol=ncol(profall))
 
-    if(is.matrix(proflow)==FALSE)
-      proflow <- matrix(proflow, ncol=ncol(profall))
+    if(is.matrix(profnegative)==FALSE)
+      profnegative <- matrix(profnegative, ncol=ncol(profall))
 
     #summarize subject profiles into a single one representing individuals with
-    #high treatment effects
-    profhigh <- matrix(colMeans(profhigh, na.rm=TRUE)>0.5, nrow=1)
+    #positive treatment effects
+    profpositive <- matrix(colMeans(profpositive, na.rm=TRUE)>0.5, nrow=1)
 
-    #and low treatment effects
-    proflow <- matrix(colMeans(proflow, na.rm=TRUE)>0.5, nrow=1)
+    #and negative treatment effects
+    profnegative <- matrix(colMeans(profnegative, na.rm=TRUE)>0.5, nrow=1)
 
-    colnames(profhigh) <- colnames(Xscale)
-    colnames(proflow) <- colnames(Xscale)
+    colnames(profpositive) <- colnames(Xscale)
+    colnames(profnegative) <- colnames(Xscale)
 
     ##########
     #gather output
-    res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1, profile=list(profhigh=profhigh,proflow=proflow))
+    res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1, profile=list(profpositive=profpositive,profnegative=profnegative))
   }
 
 
