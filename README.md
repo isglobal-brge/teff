@@ -28,7 +28,6 @@ The package includes functions to extract feature and treatment data from transc
 
 Install with 
 
-
 <code>
 library(devtools)
 </code>
@@ -36,6 +35,6 @@ library(devtools)
 install_github("teff-package/teff")
 </code>
 
-
+## Vignettes
 </br>See vignettes  [teff](https://alejandro-isglobal.github.io/teff/teff.html) and [dimorphisms](https://alejandro-isglobal.github.io/teff/dimorphisms.html) 
 online
