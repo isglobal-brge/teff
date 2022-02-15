@@ -22,7 +22,7 @@ When possible, single consensus profiles of individuals with positive, and negat
 
 ## Additional functions
 
-The package includes functions to extract feature and treatment data from transcriptomic and methylomic studies. 
+The package includes functions to extract feature and treatment data from transcriptomic and epigenomic studies. 
 
 ## Install
 
@@ -36,5 +36,6 @@ install_github("teff-package/teff")
 </code>
 
 ## Vignettes
+
 </br>See vignettes  [teff](https://alejandro-isglobal.github.io/teff/teff.html) and [dimorphisms](https://alejandro-isglobal.github.io/teff/dimorphisms.html) 
 online
