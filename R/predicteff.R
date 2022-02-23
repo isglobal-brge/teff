@@ -42,6 +42,7 @@
 #' feature data for the individuals with significantly positive and negative treatment effects, respectively.
 #' @param dup a logical that indicates whether the feature and teff data should
 #' be duplicated in case of small datasets.
+#' @param resplevel a number indicating the level of response for assessing positive ore negative treatment effects (default 0).
 #' @return  a \code{list} of class \code{pteff} with fields:
 #' \describe{
 #' \item{predictions:}{a \code{vector} with the estimated treatment effect
@@ -71,7 +72,8 @@ predicteff <- function(x,
                     plot.overlap=FALSE,
                     quant=Inf,
                     dup=FALSE,
-                    profile=FALSE){
+                    profile=FALSE,
+                    resplevel=0){
 
   ##Data set up
   ########################
@@ -157,15 +159,15 @@ predicteff <- function(x,
 
     pdf("./interactions.pdf")
       cc <- W.train
-      cc[W.train] <- "red"
-      cc[!W.train] <- "black"
+      cc[W.train] <- "orange"
+      cc[!W.train] <- "blue"
 
       for(ii in 1:ncol(X.train)){
 
         plot(X.train[,ii], log2(Y.train+1), col=cc, main=colnames(X.train)[ii],pch=20, xlab="Mean expression residual", ylab="Outcome")
-        abline(lm(log2(Y.train+1)[W.train] ~ X.train[W.train,ii]),lwd=1.5, lty=2, col="red")
-        abline(lm(log2(Y.train+1)[!W.train] ~ X.train[!W.train,ii]),lwd=1.5, lty=2)
-        legend("topleft",legend=c("Not treated", "Treated"), col=c("black", "red"), pch=20, cex=0.7)
+        abline(lm(log2(Y.train+1)[W.train] ~ X.train[W.train,ii]),lwd=1.5, lty=2, col="blue")
+        abline(lm(log2(Y.train+1)[!W.train] ~ X.train[!W.train,ii]),lwd=1.5, lty=2, col="orange")
+        legend("topleft",legend=c("Male", "Female"), col=c("orange", "blue"), pch=20, cex=0.7)
       }
 
 
@@ -178,14 +180,13 @@ predicteff <- function(x,
 
         int <- seq(min(X.train)-0.5,max(X.train)+0.5, 0.5)
 
-        hist(X.train[W.train,ii], freq=FALSE, br=int,
-             border="red", main=gsub("\n ","-",colnames(X.train)[ii]),
-             xlab="Mean expression residual", ylab="Density", ylim=c(0,0.9))
+        hist(X.train[W.train,ii], freq=FALSE, br=int, main=gsub("\n ","-",colnames(X.train)[ii]),
+             xlab="Mean expression residual", ylab="Density", ylim=c(0,0.9), col="blue", cex.lab=1.3 )
 
-        hist(X.train[!W.train,ii], add=TRUE, freq=FALSE, br=int)
+        hist(X.train[!W.train,ii], add=TRUE, freq=FALSE, br=int, col="orange", cex.lab=1.3)
 
-        legend("topright", legend=c("Not treated", "Treated"), col=c("black", "red"),
-               lty=1,cex=0.7, bty = "n" )
+        legend("topright", legend=c("Male", "Female"), col=c("orange", "blue"),
+               lty=1, bty = "n", cex=1.3)
       }
 
     dev.off()
@@ -221,17 +222,26 @@ predicteff <- function(x,
   cl <- tau.hat$predictions - 1.96*sigma.hat
   cu <- tau.hat$predictions + 1.96*sigma.hat
   #output
-  res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1)
+  res <- list(predictions=tau.hat$predictions,
+              featurenames=featureimp,
+              cl=cl, cu=cu, subsids=subsids[sm],
+              treatment = W.test*1,
+              resplevel=resplevel)
 
   if(dup==TRUE){
     selnotdup <- duplicated(subsids[sm])
-    res <- list(predictions=tau.hat$predictions[selnotdup], featurenames=featureimp,  cl=cl[selnotdup], cu=cu[selnotdup], subsids=subsids[sm][selnotdup], treatment = (W.test*1)[selnotdup])
+    res <- list(predictions=tau.hat$predictions[selnotdup],
+                featurenames=featureimp,
+                cl=cl[selnotdup], cu=cu[selnotdup],
+                subsids=subsids[sm][selnotdup],
+                treatment = (W.test*1)[selnotdup],
+                resplevel=resplevel)
   }
   #add profiling to output
   if (profile){
 
-    sighetpositive <- (cl>0) + 1
-    sighetnegative <-  (cu<0) + 1
+    sighetpositive <- (cl > resplevel) + 1
+    sighetnegative <-  (cu < resplevel) + 1
 
 
     #get profile for top featurenames define by quant
@@ -270,7 +280,11 @@ predicteff <- function(x,
 
     ##########
     #gather output
-    res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1, profile=list(profpositive=profpositive,profnegative=profnegative))
+#    res <- list(predictions=tau.hat$predictions, featurenames=featureimp,  cl=cl, cu=cu, subsids=subsids[sm], treatment = W.test*1, profile=list(profpositive=profpositive,profnegative=profnegative), resplevel=resplevel)
+
+    res$profile <-  list(profpositive=profpositive,profnegative=profnegative)
+    res$resplevel <-  resplevel
+
   }
 
 
