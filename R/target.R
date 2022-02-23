@@ -103,17 +103,22 @@ target <- function(x,
 
   if (is.matrix(featuresinf)){
 
-    selhomfeatures <- featuresinf[1, ] %in% colnames(X)
+    selhomfeatures <- featuresinf[1, ] %in% colnames(X) |
+                      featuresinf[2, ] %in% colnames(X)
+
     selfeaturesinf <- featuresinf[, selhomfeatures]
     Xhom <- lapply(1:ncol(selfeaturesinf),
                    function(i){
-                     if (selfeaturesinf[2,i] %in% colnames(X)){
-                       out <- rowMeans(X[,selfeaturesinf[, i]], na.rm = TRUE)
-                     }else{
+                     if (!selfeaturesinf[2,i] %in% colnames(X)){
                        out <- X[, selfeaturesinf[1,i]]
+                     }else if (!selfeaturesinf[1,i] %in% colnames(X)){
+                       out <- X[, selfeaturesinf[2,i]]
+                     } else {
+                       out <- rowMeans(X[,selfeaturesinf[, i]], na.rm = TRUE)
                      }
                      out
                    })
+
     Xhom <- do.call(cbind, Xhom)
     colnames(Xhom) <- paste(selfeaturesinf[1,],selfeaturesinf[2,], sep="-")
 
@@ -182,7 +187,7 @@ target <- function(x,
       raster::plot(raster::raster(im1), axes = FALSE, box=FALSE , ylab = "",xlab="", col = c( "green4", "red4"), legend = FALSE)
 
       whchprof <- sum(!pf1)/length(pf1)
-      lines(c(0,1), c(whchprof,whchprof), col="black", lwd=2)
+      lines(c(0,1), c(whchprof,whchprof), col="white", lwd=2)
 
       if(is.null(lb))
         lb <- colnames(Xscale)
@@ -197,7 +202,7 @@ target <- function(x,
       plot(raster::raster(im1), axes = FALSE, box=FALSE , ylab = "",xlab="", col = c("red4", "green4"), legend = FALSE)
 
       whchprof <- sum(!pf2)/length(pf2)
-      lines(c(0,1), c(whchprof,whchprof), col="black", lwd=2)
+      lines(c(0,1), c(whchprof,whchprof), col="white", lwd=2)
 
       if(is.null(lb))
         lb <- colnames(Xscale)
@@ -214,11 +219,11 @@ target <- function(x,
 
       pff <- pf3==-1
       whchprof1 <- sum(!pff)/length(pff)
-      lines(c(0,1),c(whchprof1,whchprof1),col="black", lwd=2)
+      lines(c(0,1),c(whchprof1,whchprof1),col="white", lwd=2)
 
       pff <- pf3==1
       whchprof2 <- 1-sum(!pff)/length(pff)
-      lines(c(0,1),c(whchprof2,whchprof2),col="black", lwd=2)
+      lines(c(0,1),c(whchprof2,whchprof2),col="white", lwd=2)
 
 
       if(is.null(lb))
@@ -261,12 +266,14 @@ target <- function(x,
         event <- x$teffdata[,"event"]
 
         dat <- data.frame(dat, time=time, event=event)
+        fla <- as.formula("Surv(time, event) ~ W*pf")
 
-        fla <- as.formula("Surv(eff, event) ~ W*pf")
-        if(length(nmcov)>0)
+        if(length(nmcov)>0){
+          dat <- data.frame(dat, data.frame(teffdata)[nmcov])
           fla <- as.formula(paste("Surv(time, event) ~ W*pf", paste(nmcov, collapse = "+"), sep="+"))
+         }
 
-        m1 <- coxph(fla, data = dat)
+        m1 <- summary(coxph(fla, data = dat))
 
       }else{
         if(model=="log2"){
